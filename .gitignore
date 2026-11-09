@@ -1,6 +1,9 @@
 .venv/
-data/
+data/*
+!data/seismic-bumps.arff
+!data/README.md
 models/
 mlruns/
 mlflow.db
 __pycache__/
+sample.json

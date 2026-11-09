@@ -24,11 +24,9 @@ jobs:
 
       # 4. 准备数据：data/和models/被.gitignore排除，所以仓库里没有，CI要自己下载/创建。
       #    --retry：网络偶发失败时自动重试
-      - name: Download dataset
+      - name: Prepare directories
         run: |
           mkdir -p data models
-          curl -fL --retry 3 -o data/seismic-bumps.zip https://archive.ics.uci.edu/static/public/266/seismic-bumps.zip
-          unzip -o data/seismic-bumps.zip -d data
 
       # 5. 在CI里重新训练模型 → 证明训练流程可复现，不依赖你本机的models文件
       - name: Train model
