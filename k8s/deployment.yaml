@@ -1,0 +1,60 @@
+# ---------- Deployment：声明"我要运行几个什么样的Pod，并持续保证它们存在" ----------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: geohazard-api
+  labels:
+    app: geohazard-api
+spec:
+  replicas: 2                      # 运行2个副本：一个挂了另一个继续服务，也方便演示负载分担
+  selector:
+    matchLabels:
+      app: geohazard-api           # Deployment通过这个标签找到自己管理的Pod
+  strategy:
+    type: RollingUpdate            # 滚动更新：逐个替换Pod，服务不中断
+    rollingUpdate:
+      maxUnavailable: 0            # 更新期间不允许有不可用的Pod
+      maxSurge: 1                  # 更新期间最多临时多起1个Pod
+  template:                        # 下面是Pod模板
+    metadata:
+      labels:
+        app: geohazard-api
+    spec:
+      containers:
+        - name: api
+          image: geohazard-api:0.1
+          imagePullPolicy: IfNotPresent   # 优先用节点上已有的镜像（我们用kind load导入的），不去远程拉取
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MODEL_PATH
+              value: /app/models/geohazard.joblib
+          # 就绪探针：/health通过后，Service才把流量发给这个Pod（模型加载完成前不接流量）
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          # 存活探针：连续失败则K8s自动重启容器（自愈）
+          livenessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          # 资源声明：requests=调度时保证的资源，limits=使用上限（超内存会被OOMKilled）
+          resources:
+            requests: {cpu: 100m, memory: 256Mi}
+            limits: {cpu: "1", memory: 1Gi}
+          securityContext:
+            allowPrivilegeEscalation: false   # 禁止提权，安全加固的基本项
+---
+# ---------- Service：给一组Pod提供稳定的访问入口和负载均衡 ----------
+apiVersion: v1
+kind: Service
+metadata:
+  name: geohazard-api
+spec:
+  selector:
+    app: geohazard-api             # 把流量转发给带这个标签、且就绪的Pod
+  ports:
+    - port: 80                     # Service对外的端口
+      targetPort: 8000             # 转发到容器的8000端口
+  type: ClusterIP                  # 只在集群内部可访问；本地用 port-forward 测试
