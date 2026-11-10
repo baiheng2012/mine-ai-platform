@@ -1,0 +1,50 @@
+# 定时监控与重训练闭环（演示版）
+# 真实环境中：模型来自模型注册表(MLflow Registry/Azure ML)，数据来自数据管道；
+# 这里用仓库里的静态数据回放，目的是展示自动化流程本身。
+name: Monitor and retrain
+
+on:
+  workflow_dispatch:            # 允许在GitHub页面手动触发
+  schedule:
+    - cron: "0 6 * * 1"         # 每周一 06:00 UTC
+
+jobs:
+  monitor-retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: mkdir -p models
+
+      # 这一步代替"从注册表取出当前线上模型"
+      - name: Train current models
+        run: |
+          uv run python src/train.py
+          uv run python src/train_flotation_final.py
+
+      - name: Run monitors
+        run: |
+          uv run python src/monitor_flotation.py
+          uv run python src/monitor_geohazard.py
+
+      # 读取监控决策，写入步骤输出，供下面的条件步骤使用
+      - name: Read decisions
+        id: decision
+        run: |
+          echo "flotation=$(uv run python -c "import json; print(str(json.load(open('models/flotation_monitoring.json'))['retrain_recommended']).lower())")" >> "$GITHUB_OUTPUT"
+
+      # 只有监控建议重训练时才执行；训练脚本自带晋级门槛，未达标会失败，不会放出差模型
+      - name: Retrain flotation model (promotion gate applies)
+        if: steps.decision.outputs.flotation == 'true'
+        run: uv run python src/train_flotation_final.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-reports
+          path: |
+            models/*_monitoring.json
+            models/*_monitoring_windows.csv
+            models/flotation_drift.png

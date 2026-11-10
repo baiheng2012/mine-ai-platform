@@ -36,6 +36,23 @@ jobs:
       - name: Generate sample request
         run: uv run python scripts/sample_request.py > sample.json
 
+      # 监控脚本冒烟测试：能跑通并产出决策文件即可（具体阈值是否触发不影响CI结果）
+      - name: Run drift monitoring
+        run: |
+          uv run python src/monitor_flotation.py
+          uv run python src/monitor_geohazard.py
+
+      - name: Upload monitoring reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-reports
+          path: |
+            models/*_monitoring.json
+            models/*_monitoring_windows.csv
+            models/flotation_drift.png
+
+
+
       # 7. 运行测试
       - name: Run tests
         run: uv run pytest -v
