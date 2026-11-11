@@ -7,3 +7,4 @@ mlruns/
 mlflow.db
 __pycache__/
 sample.json
+sample_flotation.json

@@ -18,10 +18,12 @@ RUN uv sync --frozen --no-dev --no-group train --no-install-project
 # 再复制源码和模型文件（这些变化频繁，放在后面）
 COPY src/ ./src/
 COPY models/geohazard.joblib ./models/geohazard.joblib
+COPY models/flotation.joblib ./models/flotation.joblib
+
 
 # 把虚拟环境放进PATH，之后直接用 uvicorn 命令；通过环境变量指定模型路径
-ENV PATH="/app/.venv/bin:$PATH" MODEL_PATH=/app/models/geohazard.joblib
-
+#ENV PATH="/app/.venv/bin:$PATH" MODEL_PATH=/app/models/geohazard.joblib
+ENV PATH="/app/.venv/bin:$PATH" MODEL_PATH=/app/models/geohazard.joblib FLOTATION_MODEL_PATH=/app/models/flotation.joblib
 # 安全实践：不以root用户运行（JD里强调安全合规）
 RUN useradd -m appuser
 USER appuser
