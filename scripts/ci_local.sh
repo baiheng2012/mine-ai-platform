@@ -9,7 +9,17 @@ if [ -n "$(git status --porcelain)" ]; then
   git status --short
 fi
 
-TMP=$(mktemp -d)
+
+# 临时克隆放在家目录下：与uv缓存在同一文件系统，uv可以使用硬链接，几乎不占额外空间
+# （/tmp 在部分WSL配置下是容量有限的tmpfs，且与uv缓存不在同一文件系统）
+CI_ROOT="$HOME/.cache/mine-ai-ci"
+mkdir -p "$CI_ROOT"
+TMP=$(mktemp -d -p "$CI_ROOT")
+# 无论成功还是失败，脚本退出时都删除临时克隆，避免一次次占满磁盘
+trap 'rm -rf "$TMP"' EXIT
+
+
+
 git clone --quiet . "$TMP"
 cd "$TMP"
 echo "== clean clone at $TMP =="
