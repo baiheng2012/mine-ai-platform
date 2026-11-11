@@ -8,41 +8,25 @@ on:
 
 jobs:
   test-and-build:
-    runs-on: ubuntu-latest         # GitHub提供的临时Linux虚拟机，每次都是干净环境
+    runs-on: ubuntu-latest
     steps:
-      # 1. 把仓库代码拉到虚拟机上
       - uses: actions/checkout@v4
 
-      # 2. 安装uv（官方action，带依赖缓存，加快后续运行）
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
 
-      # 3. 按uv.lock安装依赖；--frozen保证和你本地版本完全一致
+      # 严格按uv.lock安装默认依赖组(dev+train)；edge组(torch等)不会安装
       - name: Install dependencies
         run: uv sync --frozen
 
-      # 4. 准备数据：data/和models/被.gitignore排除，所以仓库里没有，CI要自己下载/创建。
-      #    --retry：网络偶发失败时自动重试
-      - name: Prepare directories
-        run: |
-          mkdir -p data models
+      # 训练、生成样例、监控、测试：步骤定义在 scripts/ci_pipeline.sh，本地也用同一个脚本
+      - name: Run pipeline (train, monitor, test)
+        run: bash scripts/ci_pipeline.sh
 
-      # 5. 在CI里重新训练模型 → 证明训练流程可复现，不依赖你本机的models文件
-      - name: Train model
-        run: uv run python src/train.py
-
-      # 6. 生成测试用的请求样例（sample.json不在仓库里，由脚本从真实数据生成）
-      - name: Generate sample request
-        run: uv run python scripts/sample_request.py > sample.json
-
-      # 监控脚本冒烟测试：能跑通并产出决策文件即可（具体阈值是否触发不影响CI结果）
-      - name: Run drift monitoring
-        run: |
-          uv run python src/monitor_flotation.py
-          uv run python src/monitor_geohazard.py
-
+      # 即使上一步失败也上传监控报告，方便排查
       - name: Upload monitoring reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: monitoring-reports
@@ -51,12 +35,6 @@ jobs:
             models/*_monitoring_windows.csv
             models/flotation_drift.png
 
-
-
-      # 7. 运行测试
-      - name: Run tests
-        run: uv run pytest -v
-
-      # 8. 构建Docker镜像（验证Dockerfile在干净环境里也能构建成功）
+      # 验证Dockerfile在干净环境里也能构建（需要上一步训练产出的两个模型文件）
       - name: Build Docker image
         run: docker build -t geohazard-api:ci .
