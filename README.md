@@ -1,6 +1,6 @@
 # Mine AI Platform
 
-![CI](https://github.com/YOUR_NAME/mine-ai-platform/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/baiheng2012/mine-ai-platform/actions/workflows/ci.yml/badge.svg)
 
 An end-to-end, reproducible machine-learning platform for a mining setting, built on two public datasets:
 a **rockburst risk ranker** (seismic monitoring) and a **flotation silica forecaster** (process plant), with
