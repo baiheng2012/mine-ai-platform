@@ -16,3 +16,4 @@ uv run python src/monitor_flotation.py                     # 监控脚本冒烟�
 uv run python src/monitor_geohazard.py
 
 uv run pytest -v                                           # 全部测试
+uv run python src/eval_assistant.py  

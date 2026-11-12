@@ -58,3 +58,11 @@ def test_dropped_negation_is_rejected():
     bad = ref.replace("not recommended", "recommended")          # 把"不建议"改成"建议"，含义反转
     ok, why = check_llm_output(bad, ref, MON)
     assert not ok and "not recommended" in why
+def test_real_failure_stray_negation_is_rejected():
+    """真实输出：句末多出一个孤立的 'not'，数字和关键短语都在，旧版护栏放行了它。"""
+    ref = T.explain("flotation", FLOT)
+    bad = ("Hour 3500: predicted silica in the concentrate is 1.63%, compared to the last lab value of 1.33% "
+           "(expected change +0.30 points). The model is only about 4.6% better than repeating the last lab value, "
+           "so treat it as a small correction not.")
+    ok, why = check_llm_output(bad, ref, FLOT)
+    assert not ok and "negation" in why

@@ -56,10 +56,13 @@ class Assistant:
         self.audit = audit or AuditLog()
         self.ctx = Ctx(api_post=api_post, data=data or DataSource(), orders_path=orders_path)
 
+    #def _result(self, rid, status, answer, **kw):
+    #    return {"request_id": rid, "status": status, "answer": answer, "intent": None,
+    #            "tool": None, "backend_used": None, "facts": None, **kw}
     def _result(self, rid, status, answer, **kw):
-        return {"request_id": rid, "status": status, "answer": answer, "intent": None,
-                "tool": None, "backend_used": None, "facts": None, **kw}
-
+        return {"request_id": rid, "status": status, "answer": answer, "intent": None, "tool": None,
+                "backend_used": None, "facts": None, "reject_reason": None, "candidate": None, **kw}
+    
     def handle(self, user_id: str, role: str, message: str) -> dict:
         rid = uuid.uuid4().hex[:8]
         msg = sanitize(message)
@@ -118,7 +121,7 @@ class Assistant:
         if text is None:
             text = template.explain(intent, facts)
         """
-
+        """
         facts, template = res["facts"], TemplateBackend()
         reference = template.explain(intent, facts)         # 确定性的"标准答案文本"，永远可用
         used, text = template.name, None
@@ -135,8 +138,28 @@ class Assistant:
         if text is None:
             text = reference
 
-
-
-
         log("response", backend=used, status="ok")
         return self._result(rid, "ok", text, intent=intent, tool=tool, backend_used=used, facts=facts)
+    """
+
+        facts, template = res["facts"], TemplateBackend()
+        reference = template.explain(intent, facts)         # 确定性的"标准答案文本"，永远可用
+        used, text, reject, candidate = template.name, None, None, None
+        if self.backend.is_llm:
+            try:
+                candidate = self.backend.explain(intent, facts)   # LLM只看到模板文字，看不到用户原话
+                ok, reason = check_llm_output(candidate, reference, facts)
+                if ok:
+                    used, text = self.backend.name, candidate
+                else:                                        # 校验不通过：丢弃，改用模板，并记录原因
+                    reject = reason
+                    log("llm_output_rejected", reason=reason)
+            except Exception as e:
+                reject = f"llm_unavailable: {type(e).__name__}"
+                log("llm_unavailable", error=type(e).__name__)
+        if text is None:
+            text = reference
+        log("response", backend=used, status="ok")
+        return self._result(rid, "ok", text, intent=intent, tool=tool, backend_used=used, facts=facts,
+                            reject_reason=reject, candidate=candidate if reject else None)
+        

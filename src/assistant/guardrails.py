@@ -66,7 +66,12 @@ _REASSURE = re.compile(r"\b(safe\w*|acceptable|fine|all clear|no (?:risk|danger|
 _LEVEL_UPPER = re.compile(r"\b(ALERT|ELEVATED|NORMAL)\b")
 KEEP_PHRASES = ["not recommended", "not been sent", "not a calibrated probability",
                 "small correction", "not flagged"]
+# 否定词：改写后的否定词个数必须与模板一致(防止凭空多出或丢失 not/no/never 而反转含义)
+_NEG = re.compile(r"\b(?:not|no|never|cannot|without)\b|n't", re.IGNORECASE)
 
+
+def _neg_count(text: str) -> int:
+    return len(_NEG.findall(text))
 
 def _levels(text: str) -> set:
     """文本里出现的风险等级标签；小写的 elevated 也算(它不会出现在别的语境里)。"""
@@ -103,7 +108,8 @@ def claims_check(output: str, reference: str):
     if (extra := _stems(_REASSURE, output, None) - _stems(_REASSURE, reference, None)):
         problems.append(f"unsupported reassurance wording {sorted(extra)}")
     
-    
+    if _neg_count(output) != _neg_count(reference):
+        problems.append(f"negation count changed ({_neg_count(reference)} -> {_neg_count(output)})")
     
     for phrase in KEEP_PHRASES:
         if phrase in reference.lower() and phrase not in output.lower():

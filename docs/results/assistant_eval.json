@@ -1,0 +1,62 @@
+{
+  "model": "qwen2.5:3b",
+  "n_requests": 41,
+  "accepted_rate": 0.512,
+  "risk_level_counts_test_segment": {
+    "ELEVATED": 754,
+    "ALERT": 22
+  },
+  "n_rejected": 20,
+  "accepted_verbatim_copy_rate": 0.512,
+  "accepted_and_rewritten_rate": 0.0,
+  "by_intent": {
+    "geohazard": {
+      "n": 20,
+      "accepted_rate": 1.0
+    },
+    "flotation": {
+      "n": 20,
+      "accepted_rate": 0.0
+    },
+    "monitoring": {
+      "n": 1,
+      "accepted_rate": 1.0
+    }
+  },
+  "geohazard_accepted_rate_by_risk_level": {
+    "NORMAL": null,
+    "ELEVATED": 1.0,
+    "ALERT": 1.0
+  },
+  "rejection_reasons": {
+    "changed negation": 20,
+    "dropped number": 2
+  },
+  "examples_of_rejected_text": [
+    {
+      "intent": "flotation",
+      "reason": "negation count changed (0 -> 1)",
+      "text": "Hour 4028: predicted silica in the concentrate is 1.99%, compared to the last lab value of 1.70% (expected change +0.29 points). The model is only about 4.6% better than repeating the last lab value, so treat it as a small correction not."
+    },
+    {
+      "intent": "flotation",
+      "reason": "negation count changed (0 -> 1)",
+      "text": "Hour 3642: predicted silica in the concentrate is 1.38%, compared to the last lab value of 1.15% (expected change +0.23 points). The model is only about 4.6% better than repeating the last lab value, so treat it as a small correction not."
+    },
+    {
+      "intent": "flotation",
+      "reason": "negation count changed (0 -> 1)",
+      "text": "Hour 3819: predicted silica in the concentrate is 3.39%, compared to the last lab value of 3.62% (expected change -0.23 points). The model is only about 4.6% better than repeating the last lab value, so treat it as a small correction not."
+    },
+    {
+      "intent": "flotation",
+      "reason": "negation count changed (0 -> 1)",
+      "text": "Hour 3926: predicted silica in the concentrate is 1.58%, compared to the last lab value of 1.41% (expected change +0.17 points). The model is only about 4.6% better than repeating the last lab value, so treat it as a small correction not."
+    },
+    {
+      "intent": "flotation",
+      "reason": "negation count changed (0 -> 1)",
+      "text": "Hour 3713: predicted silica in the concentrate is 1.49%, compared to the last lab value of 1.44% (expected change +0.05 points). The model is only about 4.6% better than repeating the last lab value, so treat it as a small correction not."
+    }
+  ]
+}
