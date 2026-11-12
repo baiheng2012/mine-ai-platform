@@ -186,6 +186,36 @@ It trains both models from the committed data, runs monitoring, the test suite a
 `monitor-retrain.yml` runs weekly (and on demand): it monitors, and retrains through the promotion gate when the monitoring rule recommends it.
 In this demo the data are static, so the retraining step shows the mechanism rather than producing a new model.
 
+## Mapping to Azure ML
+
+> Design mapping only. Nothing in this repository has been run on Azure. Product names follow Azure Machine Learning v2 as understood by the author; check the current documentation before relying on details.
+
+The platform was built with open tools so that the logic is portable. This table shows where each part would live on Azure ML and what would change.
+
+| Part | Here | On Azure ML | What changes |
+|---|---|---|---|
+| Experiment tracking | MLflow with a local SQLite store | The Azure ML workspace acts as an MLflow tracking server (`azureml-mlflow`) | Mostly the tracking URI |
+| Training | `uv run python src/train_*.py` in CI | Command jobs or pipeline steps on a compute cluster; environment built from `uv.lock` or the Docker image | Same scripts |
+| Data | Small committed CSV and ARFF files | Versioned data assets on Blob Storage or ADLS | Add versioning and access control |
+| Model versions | joblib files; SHA-256 hash used as the version | Model registry with versions and tags (for example the gate result) | Register only if the gate passes |
+| Promotion gate | Exit code of `train_flotation_final.py` | A pipeline step or CI step that registers the model only on pass | Same logic |
+| Serving | FastAPI in a non-root Docker image | Managed online endpoint with a custom container, or Kubernetes compute | Blue/green traffic split replaces the manual rolling update demo |
+| Orchestration | kind cluster, manifests in `k8s/` | AKS through Kubernetes compute, or managed endpoints | Manifests can be kept if AKS is used |
+| Image registry | Local Docker images | Azure Container Registry | Push from CI |
+| Monitoring | PSI and consecutive-window rules (`src/drift.py`, `src/monitor_*.py`) | Azure ML model monitoring (data drift, prediction drift, data quality) on a schedule, plus a custom performance signal when labels arrive | Keep the rule logic; use the platform for scheduling and alerts |
+| Scheduled retraining | Weekly GitHub Actions workflow | An Azure ML schedule that triggers a pipeline, or Actions calling `az ml` | Same decision rule |
+| Audit and logs | Hash-chained JSON Lines file | Azure Monitor and Log Analytics, Application Insights for requests, immutable blob storage for audit evidence | The hash chain can stay as an integrity check |
+| Identity and access | Role passed on the command line | Microsoft Entra ID, Azure RBAC and managed identities | The default-deny logic stays in the application |
+| Secrets | None needed in the demo | Azure Key Vault | New |
+| Edge | ONNX export, ONNX Runtime and TensorRT benchmark | The same ONNX artefact registered as a model and run in containers on edge devices (for example with Azure IoT Edge) | No edge hardware was tested |
+| LLM | Local model through Ollama | Hosted models in Azure OpenAI or Azure AI Foundry inside the company network | The guardrails are domain-specific and stay in code; platform content filters can be added on top |
+| Responsible AI | Model card, governance notes, regression tests | Responsible AI dashboard (explanations, error analysis) and registry metadata | Complements the model card, does not replace it |
+| Infrastructure as code | None (manifests and CI only) | Bicep or Terraform for workspace, registry, key vault, compute and endpoints | Not started |
+
+**Suggested migration order:** (1) point MLflow at an Azure ML workspace; (2) run the training scripts as command jobs; (3) register models from the pipeline with the gate result as a tag; (4) deploy the container to a managed online endpoint with a blue/green rollout; (5) enable model monitoring and keep the consecutive-window rules as the alert logic; (6) move the audit trail to Azure Monitor plus immutable storage and replace the role argument with Entra ID roles; (7) describe all resources in Bicep or Terraform.
+
+**What would stay the same:** the feature code shared by training and serving, the promotion gate, the drift and performance rules, and the assistant's access control and output guardrails.
+
 ## Limitations and future work
 
 - Small public datasets from two different plants; single time range; very few positive events (26 in the rockburst hold-out). No external validation.
