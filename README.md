@@ -1,5 +1,7 @@
 # Mine AI Platform
 
+![CI](https://github.com/YOUR_NAME/mine-ai-platform/actions/workflows/ci.yml/badge.svg)
+
 An end-to-end, reproducible machine-learning platform for a mining setting, built on two public datasets:
 a **rockburst risk ranker** (seismic monitoring) and a **flotation silica forecaster** (process plant), with
 containerised serving, Kubernetes manifests, CI, drift monitoring, an ONNX / TensorRT edge benchmark, and a
@@ -100,6 +102,20 @@ tools are read-only, and inspection orders are drafts that need human approval.
 **What the LLM evaluation showed** (local model `qwen2.5:3b` via Ollama; 41 requests: 20 shifts split between the ELEVATED and ALERT bands, 20 forecast hours and 1 monitoring request): 21 of 41 rewrites (51%) passed all checks, and **all 21 were verbatim copies of the template, so none was a genuine rewrite**. All 20 flotation rewrites were rejected for the same reason: the model appended a stray "not" ("... treat it as a small correction not."), which changes the negation count (two also dropped a number). The model is deterministic at temperature 0, so this is a systematic failure, not noise. It may be induced by the rewrite prompt, which mentions negations; this was not tested. Before the semantic guard existed, the model produced text with correct numbers but wrong meaning (it invented "risk level is ALERT" for a forecast without a risk level, and wrote "acceptable parameters" next to "inspection is advised"). Conclusion: the deterministic template is the answer of record; in this setup the small local model adds no information, only risk, so the LLM is an optional, heavily checked extra.
 
 See `docs/GOVERNANCE.md` for the controls implemented and the gaps that would remain in production.
+
+## Figures
+
+**Weekly replay of the flotation model: share of drifted features (top) and RMSE gain over the baseline (bottom)**
+
+![Weekly replay of the flotation model: share of drifted features (top) and RMSE gain over the baseline (bottom)](docs/images/flotation_drift.png)
+
+**Edge inference latency by backend and batch size (latest benchmark run; absolute values vary between runs)**
+
+![Edge inference latency by backend and batch size (latest benchmark run; absolute values vary between runs)](docs/images/edge_benchmark.png)
+
+**Rockburst model: largest logistic regression coefficients (standardised features)**
+
+![Rockburst model: largest logistic regression coefficients (standardised features)](docs/images/coefficients.png)
 
 ## Repository layout
 

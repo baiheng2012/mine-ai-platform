@@ -1,0 +1,11 @@
+{
+  "retrain_recommended": false,
+  "investigate_drift": true,
+  "drift_trigger": true,
+  "performance_trigger": false,
+  "rule": "retrain: model worse than persistence for 2 consecutive windows; investigate: 2 consecutive windows with status DRIFT",
+  "n_windows": 9,
+  "windows_by_status": {
+    "DRIFT": 9
+  }
+}

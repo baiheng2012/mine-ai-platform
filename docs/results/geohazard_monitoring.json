@@ -1,0 +1,9 @@
+{
+  "recalibrate_recommended": true,
+  "investigate_drift": true,
+  "drift_trigger": true,
+  "alert_rate_trigger": true,
+  "rule": "recalibrate: alert rate outside [5%, 20%] for 2 consecutive windows; investigate: 2 consecutive DRIFT windows",
+  "n_windows": 7,
+  "mean_alert_rate": 0.03142857142857143
+}

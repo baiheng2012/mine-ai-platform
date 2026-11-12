@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "min_improvement_pct": 3.0,
+  "rmse_improvement_cv_pct": 4.37,
+  "rmse_improvement_holdout_pct": 4.62,
+  "holdout_rmse_model": 0.6803,
+  "holdout_rmse_persistence": 0.7132,
+  "holdout_mae_change_pct": 4.62,
+  "bootstrap_improvement_pct_p5_p50_p95": [
+    2.89,
+    4.64,
+    6.22
+  ],
+  "n_holdout": 819
+}

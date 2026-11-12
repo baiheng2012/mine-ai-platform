@@ -1,0 +1,8 @@
+window,drifted_share,status,score_psi,alert_rate,alert_rate_out_of_range,event_rate,top_drift
+0,0.5555555555555556,DRIFT,1.0380677340198812,0.01,True,0.03,"gpuls(1.19), genergy(0.94), nbumps3(0.65)"
+1,0.3333333333333333,WARN,0.751717136687655,0.06,False,0.04,"gpuls(1.67), genergy(1.47), nbumps(0.64)"
+2,0.5,DRIFT,1.253586064719866,0.01,True,0.01,"gpuls(2.41), genergy(1.60), gdpuls(1.11)"
+3,0.5,DRIFT,1.0445838677344135,0.02,True,0.02,"gpuls(2.67), ghazard(1.68), genergy(1.65)"
+4,0.5,DRIFT,0.5120118493905996,0.09,False,0.08,"gpuls(1.93), genergy(1.22), seismic(1.11)"
+5,0.3888888888888889,WARN,0.7873835686841683,0.03,True,0.03,"gpuls(2.90), genergy(2.48), gdpuls(0.85)"
+6,0.5,DRIFT,1.1871309725389447,0.0,True,0.01,"genergy(2.60), gpuls(2.02), nbumps(1.03)"
